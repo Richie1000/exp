@@ -1,1 +1,1 @@
-A simple expense app for keeping record of a user's spending
+A simple expense app for keeping record of a user's expenditure or spending
