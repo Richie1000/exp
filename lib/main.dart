@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_complete_guide/widgets/charts.dart';
@@ -55,7 +56,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   //String titleInput;
 
   final List<Transaction> _userTransactions = [
@@ -66,6 +67,32 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
 
   bool _showChart = false;
+  Color _bgColor;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    const availableColors = [
+      Colors.red,
+      Colors.black,
+      Colors.purple,
+      Colors.blue
+    ];
+    _bgColor = availableColors[Random().nextInt(availableColors.length)];
+    super.initState();
+  }
+
+  @override
+  void didChangeAppLifeCycleState(AppLifecycleState state) {
+    print(state);
+  }
+
+  @override
+  dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
   List<Transaction> get _recentTransaction {
     return _userTransactions.where((tx) {
       return tx.date.isAfter(DateTime.now().subtract(Duration(days: 7)));
@@ -101,11 +128,58 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final isLandscape = mediaQuery.orientation == Orientation.landscape;
-    final PreferredSizeWidget appbar = Platform.isIOS
+  List<Widget> _buildLandscapeContent(
+    MediaQueryData mediaQuery,
+    AppBar appbar,
+    Widget txListWidget,
+  ) {
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            "Show Chart",
+            style: Theme.of(context).textTheme.headline6,
+          ),
+          Switch.adaptive(
+              activeColor: Theme.of(context).accentColor,
+              value: _showChart,
+              onChanged: (val) {
+                setState(() {
+                  _showChart = val;
+                });
+              }),
+          _showChart
+              ? Container(
+                  height: (mediaQuery.size.height -
+                          appbar.preferredSize.height -
+                          mediaQuery.padding.top) *
+                      0.3,
+                  child: Chart(_recentTransaction))
+              : txListWidget
+        ],
+      )
+    ];
+  }
+
+  List<Widget> _buildPotraitContent(
+    MediaQueryData mediaQuery,
+    AppBar appbar,
+    Widget txListWidget,
+  ) {
+    return [
+      Container(
+          height: (mediaQuery.size.height -
+                  appbar.preferredSize.height -
+                  mediaQuery.padding.top) *
+              0.3,
+          child: Chart(_recentTransaction)),
+      txListWidget,
+    ];
+  }
+
+  Widget buildAppBar() {
+    return Platform.isIOS
         ? CupertinoNavigationBar(
             middle: Text("Expense"),
             trailing: Row(
@@ -126,6 +200,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   icon: Icon(Icons.add))
             ],
           );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+    final PreferredSizeWidget appbar = buildAppBar();
+
     final txListWidget = Container(
         height: mediaQuery.size.height -
             appbar.preferredSize.height -
@@ -139,40 +221,11 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             if (isLandscape)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    "Show Chart",
-                    style: Theme.of(context).textTheme.headline6,
-                  ),
-                  Switch.adaptive(
-                      activeColor: Theme.of(context).accentColor,
-                      value: _showChart,
-                      onChanged: (val) {
-                        setState(() {
-                          _showChart = val;
-                        });
-                      }),
-                ],
-              ),
+              ..._buildLandscapeContent(mediaQuery, appbar, txListWidget),
             if (!isLandscape)
-              Container(
-                  height: (mediaQuery.size.height -
-                          appbar.preferredSize.height -
-                          mediaQuery.padding.top) *
-                      0.3,
-                  child: Chart(_recentTransaction)),
-            if (!isLandscape) txListWidget,
-            if (isLandscape)
-              _showChart
-                  ? Container(
-                      height: (mediaQuery.size.height -
-                              appbar.preferredSize.height -
-                              mediaQuery.padding.top) *
-                          0.3,
-                      child: Chart(_recentTransaction))
-                  : txListWidget
+              ..._buildPotraitContent(mediaQuery, appbar, txListWidget),
+            //if (!isLandscape) txListWidget,
+            //if (isLandscape)
           ]),
     ));
     return Platform.isIOS

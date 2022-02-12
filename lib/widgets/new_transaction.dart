@@ -10,10 +10,15 @@ import 'adaptive_button.dart';
 class NewTransaction extends StatefulWidget {
   final Function addTx;
 
-  NewTransaction(this.addTx);
+  NewTransaction(this.addTx) {
+    print("Constructor New tranasaction Widget");
+  }
 
   @override
-  State<NewTransaction> createState() => _NewTransactionState();
+  State<NewTransaction> createState() {
+    print("Create New Transaction Widget");
+    return _NewTransactionState();
+  }
 }
 
 class _NewTransactionState extends State<NewTransaction> {
@@ -22,6 +27,31 @@ class _NewTransactionState extends State<NewTransaction> {
   final _amountController = TextEditingController();
 
   DateTime _selectDate;
+
+  _NewTransactionState() {
+    print("Constructor NewTransaction State");
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    print("Init state");
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    print("didUpdateWidget");
+    super.didChangeDependencies();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    print("dispose");
+    super.dispose();
+  }
 
   //NewTransaction({Key key}) : super(key: key);
   void _submitData() {
